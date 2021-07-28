@@ -1,0 +1,66 @@
+# Docker Compose file Reference (https://docs.docker.com/compose/compose-file/)
+version: "3.6"
+
+services:
+  api:
+    environment: # Note that these are NOT REAL credentials to ANYTHING
+      - "AWS_ACCESS_KEY_ID=AKIAL4LKFWNAXULZZ226"
+      - "AWS_SECRET_ACCESS_KEY=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"
+    build: .
+    ports:
+      - "3000:3000"
+    restart: always
+    depends_on:
+      - postgres_db
+    volumes:
+      - "./:/app"
+    networks:
+      - backend
+    entrypoint: [sh, -c,  "./entry-point.sh"]
+
+  postgres_db:
+    build:
+      context: .
+      dockerfile: Dockerfile.pg
+    restart: always
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+    volumes:
+      - ./src/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   environment:
+  #     - "PGADMIN_DEFAULT_EMAIL=user@domain.com"
+  #     - "PGADMIN_DEFAULT_PASSWORD=SuperSecret"
+  #     - "PGADMIN_CONFIG_CONSOLE_LOG_LEVEL=40"
+  #   networks:
+  #     - backend
+  #   ports:
+  #     - "80:80"
+    
+  keycloak:
+    build:
+      context: .
+      dockerfile: Dockerfile.keycloak
+    environment:
+      - "KEYCLOAK_USER=admin"
+      - "KEYCLOAK_PASSWORD=admin"
+      - "DB_VENDOR=postgres"
+      - "DB_ADDR=postgres_db"
+      - "DB_PORT=5432"
+      - "DB_USER=mask_admin"
+      - "DB_PASSWORD=admin"
+    networks:
+      - backend
+    ports:
+      - "8080:8080"
+
+volumes:
+  node_modules:
+  db-data:
+
+networks:
+  backend:
